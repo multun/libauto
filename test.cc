@@ -10,26 +10,26 @@
 
 
 
-template<template <class...> class ...States>
+template<class Auto>
 struct ExInterface {
-    virtual void callback(Auto<ExInterface, States...> &a) = 0;
+    virtual void callback(Auto &a) = 0;
 
     virtual ~ExInterface() {
     }
 };
 
 
-template<template<class...> class ...States>
-struct StateA : ExInterface<States...> {
-    virtual void callback(Auto<ExInterface, States...> &a) override {
+template<class Auto>
+struct StateA : ExInterface<Auto> {
+    virtual void callback(Auto &a) override {
         std::cout << "1" << std::endl;
     }
 };
 
 
-template<template <template<class...> class ...States>
-struct StateB : ExInterface<States...> {
-    virtual void callback(Auto<ExInterface, States...> &a) override {
+template<class Auto>
+struct StateB : ExInterface<Auto> {
+    virtual void callback(Auto &a) override {
         std::cout << "B, entering 1" << std::endl;
         a.template enter<StateA>();
     }
@@ -40,7 +40,7 @@ using MyAuto = Auto<ExInterface, StateA, StateB>;
 
 int main() {
     MyAuto a;
-    a.template initialize<StateA>();
-    a.get_state()->callback(a);
-    a.get_state()->callback(a);
+    a.template initialize<StateB>();
+    a.get_state().callback(a);
+    a.get_state().callback(a);
 }

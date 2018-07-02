@@ -29,16 +29,16 @@ constexpr bool static_type_eq()
 
 // counts the number of parameters of the template
 
-template <typename cur_type, typename ...args>
-constexpr size_t type_count()
-{
-    return 1 + type_count<args...>();
-}
-
 template <typename>
 constexpr size_t type_count()
 {
     return 1;
+}
+
+template <typename cur_type, typename next_type, typename ...types>
+constexpr size_t type_count()
+{
+    return 1 + type_count<next_type, types...>();
 }
 
 
@@ -58,4 +58,61 @@ constexpr size_t type_index()
     // a static assert should be used here, as the last type of the list,
     // if reached, must be the one we're looking for
     return 0;
+}
+
+
+template <class T>
+struct AlignofMap {
+    constexpr size_t operator()() {
+        return alignof(T);
+    }
+};
+
+template <class T>
+struct SizeofMap {
+    constexpr size_t operator()() {
+        return sizeof(T);
+    }
+};
+
+
+// not really elegant, could be replaced by a map / reduce
+// on a parameter pack object
+
+template <class TArg, template <class> class f,
+          template<class> class Arg>
+constexpr auto max_map_pack() {
+    return f<Arg<TArg>>()();
+}
+
+template <class TArg, template <class> class f,
+          template<class> class Arg,
+          template<class> class NArg,
+          template<class> class ...Args>
+constexpr auto max_map_pack() {
+    auto prev = max_map_pack<TArg, f, NArg, Args...>();
+    auto cur = f<Arg<TArg>>()();
+    if (cur > prev)
+        return cur;
+    return prev;
+}
+
+
+template <class TParm,
+          template<class> class Elem,
+          template<class> class HList>
+constexpr bool map_pack_contains() {
+    return static_type_eq<Elem<TParm>, HList<TParm>>();
+}
+
+template <class TParm,
+          template<class> class Elem,
+          template<class> class HList,
+          template<class> class HHList,
+          template<class> class ...Rest>
+constexpr bool map_pack_contains() {
+    if (static_type_eq<Elem<TParm>, HList<TParm>>())
+        return true;
+    else
+        return map_pack_contains<TParm, Elem, HHList, Rest...>();
 }

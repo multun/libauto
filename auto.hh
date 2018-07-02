@@ -7,40 +7,40 @@
 #include <limits>
 #include <utility>
 
-template<template<template<class ...> class ...> class Interface,
-         template<class ...> class ...States>
+#include "type_utils.hxx"
+
+template<template<class> class PInterface,
+         template<class> class ...States>
 class Auto {
+    using self_t = Auto<PInterface, States...>;
+    using Interface = PInterface<self_t>;
+
     struct StateData {
-        /* alignas(States...) */
-        // uint8_t state_data_[sizeof...(States)];
-        uint8_t state_data_[1000];
+        alignas(max_map_pack<self_t, AlignofMap, States...>())
+        uint8_t state_data_[max_map_pack<self_t, SizeofMap, States...>()];
 
         template<class T>
         T* get_data() {
-            return /*std::launder(*/static_cast<T*>(&state_data_)/*)*/;
+            auto res = static_cast<T*>(static_cast<void*>(state_data_));
+            return /*std::launder(*/res/*)*/;
         }
 
-        template<template <template<class ...> class ...> class State, class ...Args>
+        template<template <class> class State, class ...Args>
         auto enter(Args&& ...args) {
-            static_assert(std::is_base_of<
-                          Interface<States...>,
-                          State<States...>>::value);
-            return new (&state_data_) State<States...>(
-                std::forward<Args>(args)...);
+            // TODO: move this assert at class construction time
+            static_assert(std::is_base_of<Interface, State<self_t>>::value);
+            static_assert(map_pack_contains<self_t, State, States...>());
+            return new (&state_data_) State<self_t>(std::forward(args)...);
         }
 
         void leave() {
             // The destructor must be virtual
-            get_data<Interface<States...>>()->~Interface();
+            get_data<Interface>()->~Interface();
         }
     };
 
     StateData data_[2];
     bool data_pos_;
-
-    ~Auto() {
-        cur_data().leave();
-    }
 
     StateData &cur_data() {
         return data_[data_pos_];
@@ -50,26 +50,28 @@ class Auto {
         return data_[!data_pos_];
     }
 
-    auto &get_state() {
-        using IPack = Interface<States...>;
-        return *cur_data().template get_data<IPack>();
-    }
-
 
 public:
+
+    auto &get_state() {
+        return *cur_data().template get_data<Interface>();
+    }
+
     Auto() : data_pos_(0) {}
 
-    template<class InitialState, class ...Args>
+    ~Auto() {
+        cur_data().leave();
+    }
+
+    template<template<class> class InitialState, class ...Args>
     void initialize(Args&& ...args) {
-        // state_ = type_index<InitialState, States...>();
         cur_data().template enter<InitialState, args...>(std::forward<Args>(args)...);
     }
 
-    template<class NewState, class ...Args>
+    template<template<class> class NewState, class ...Args>
     void enter(Args&& ...args) {
-        // state_ = type_index<NewState, States...>();
         other_data().template enter<NewState, args...>(std::forward<Args>(args)...);
-        get_state().leave();
+        cur_data().leave();
         data_pos_ = !data_pos_;
     }
 };
