@@ -37,7 +37,7 @@ class Auto {
         auto enter(Args&& ...args) {
             // TODO: move this assert at class construction time
             static_assert(std::is_base_of<intf_t, State<self_t>>::value);
-            // static_assert(map_pack_contains<self_t, State, States...>());
+            static_assert(tlist::template contains<State<self_t>>());
             return new (&state_data_) State<self_t>(std::forward(args)...);
         }
 
