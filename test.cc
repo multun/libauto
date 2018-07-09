@@ -20,7 +20,7 @@ struct ExInterface {
 
 
 template<class Auto>
-struct StateA : ExInterface<Auto::common> {
+struct StateA : ExInterface<Auto> {
     virtual void callback(Auto &a) override {
         std::cout << "1" << std::endl;
     }
@@ -28,7 +28,7 @@ struct StateA : ExInterface<Auto::common> {
 
 
 template<class Auto>
-struct StateB : ExInterface<Auto::common> {
+struct StateB : ExInterface<Auto> {
     virtual void callback(Auto &a) override {
         std::cout << "B, entering 1" << std::endl;
         a.template enter<StateA>();

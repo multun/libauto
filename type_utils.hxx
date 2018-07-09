@@ -4,26 +4,44 @@
 #include <stddef.h>
 
 
-template<typename T, typename U>
+template<template<class> class T, template<class> class U>
+struct static_ttype_test
+{
+    static const bool eq = false;
+};
+
+
+template<template<class> class T>
+struct static_ttype_test<T, T>
+{
+    static const bool eq = true;
+};
+
+template<class T, class U>
 struct static_type_test
 {
     static const bool eq = false;
 };
 
 
-template<typename T>
+template<class T>
 struct static_type_test<T, T>
 {
     static const bool eq = true;
 };
 
-
 // tests whether two types are equal
 
-template<typename T, typename U>
+template<class T, class U>
 constexpr bool static_type_eq()
 {
     return static_type_test<T, U>::eq;
+}
+
+template<template<class> class T, template<class> class U>
+constexpr bool static_type_eq()
+{
+    return static_ttype_test<T, U>::eq;
 }
 
 
@@ -58,63 +76,6 @@ constexpr size_t type_index()
     // a static assert should be used here, as the last type of the list,
     // if reached, must be the one we're looking for
     return 0;
-}
-
-
-template <class T>
-struct AlignofMap {
-    constexpr size_t operator()() {
-        return alignof(T);
-    }
-};
-
-template <class T>
-struct SizeofMap {
-    constexpr size_t operator()() {
-        return sizeof(T);
-    }
-};
-
-
-// not really elegant, could be replaced by a map / reduce
-// on a parameter pack object
-
-template <class TArg, template <class> class f,
-          template<class> class Arg>
-constexpr auto max_map_pack() {
-    return f<Arg<TArg>>()();
-}
-
-template <class TArg, template <class> class f,
-          template<class> class Arg,
-          template<class> class NArg,
-          template<class> class ...Args>
-constexpr auto max_map_pack() {
-    auto prev = max_map_pack<TArg, f, NArg, Args...>();
-    auto cur = f<Arg<TArg>>()();
-    if (cur > prev)
-        return cur;
-    return prev;
-}
-
-
-template <class TParm,
-          template<class> class Elem,
-          template<class> class HList>
-constexpr bool map_pack_contains() {
-    return static_type_eq<Elem<TParm>, HList<TParm>>();
-}
-
-template <class TParm,
-          template<class> class Elem,
-          template<class> class HList,
-          template<class> class HHList,
-          template<class> class ...Rest>
-constexpr bool map_pack_contains() {
-    if (static_type_eq<Elem<TParm>, HList<TParm>>())
-        return true;
-    else
-        return map_pack_contains<TParm, Elem, HHList, Rest...>();
 }
 
 template<class ...Elems>
