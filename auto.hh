@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <limits>
 #include <utility>
+#include <typeinfo>
+#include <iostream>
 
 #include "type_utils.hxx"
 
@@ -89,6 +91,10 @@ public:
              class ...Args>
     void free_transit(Args&& ...args) {
         // TODO: validate former state
+#ifdef AUTO_LOGGING
+        std::cout << "transition from " << typeid(OldState<self_t>).name() << " to "
+                  << typeid(NewState<self_t>).name() << std::endl;
+#endif
         enter<NewState, Args...>(std::forward<Args>(args)...);
     }
 
