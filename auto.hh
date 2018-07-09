@@ -29,7 +29,7 @@ class Auto {
 
         template<class T>
         T* get_data() {
-            auto res = static_cast<T*>(static_cast<void*>(state_data_));
+            T * volatile res = static_cast<T*>(static_cast<void*>(state_data_));
             return /*std::launder(*/res/*)*/;
         }
 
