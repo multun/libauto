@@ -125,3 +125,9 @@ struct AlignofReducer {
             return AlignofReducer<T>{};
     }
 };
+
+template<template<class> class OldState, template<class> class NewState>
+struct TPair {
+    template<class T> using old_t = OldState<T>;
+    template<class T> using new_t = NewState<T>;
+};

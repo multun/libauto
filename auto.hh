@@ -12,9 +12,10 @@
 #include "type_utils.hxx"
 
 template<template<class> class PInterface,
+         class AllowedTransitions,
          template<class> class ...States>
 class Auto {
-    using self_t = Auto<PInterface, States...>;
+    using self_t = Auto<PInterface, AllowedTransitions, States...>;
     using intf_t = PInterface<self_t>;
     using ttlist = TTList<States...>;
 
@@ -90,11 +91,14 @@ public:
              template<class> class OldState,
              class ...Args>
     void free_transit(Args&& ...args) {
-        // TODO: validate former state
+        static_assert(
+            AllowedTransitions::template contains<TPair<OldState, NewState>>());
+
 #ifdef AUTO_LOGGING
         std::cout << "transition from " << typeid(OldState<self_t>).name() << " to "
                   << typeid(NewState<self_t>).name() << std::endl;
 #endif
+
         enter<NewState, Args...>(std::forward<Args>(args)...);
     }
 

@@ -44,7 +44,8 @@ struct StateB : ExInterface<Auto> {
 };
 
 
-using MyAuto = Auto<ExInterface, StateA, StateB>;
+using trans = TList<TPair<StateB, StateA>>;
+using MyAuto = Auto<ExInterface, trans, StateA, StateB>;
 
 int main() {
     MyAuto a;
