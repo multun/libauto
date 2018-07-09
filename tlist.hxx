@@ -29,27 +29,27 @@ struct TNAME {
         return TNAME<Elems..., T>{};
     }
 
-    // // maps can only produce TLists, couldn't make it output a TTList
-    // template<MYCLASS Key>
-    // struct contains_c {
-    //     template<MYCLASS First, MYCLASS Second, MYCLASS ...More>
-    //     static constexpr auto contains() {
-    //         if constexpr (static_type_eq<Key, First>())
-    //             return true;
-    //         else
-    //             return constains_c<Key>::template contains<Second, More...>();
-    //     }
+    // maps can only produce TLists, couldn't make it output a TTList
+    template<MYCLASS Key>
+    struct contains_c {
+        template<MYCLASS First, MYCLASS Second, MYCLASS ...More>
+        static constexpr auto contains() {
+            if constexpr (static_type_eq<Key, First>())
+                return true;
+            else
+                return contains_c<Key>::template contains<Second, More...>();
+        }
 
-    //     template<MYCLASS Elem>
-    //     static constexpr auto contains() {
-    //         return static_type_eq<Key, Elem>()
-    //     }
-    // };
+        template<MYCLASS Elem>
+        static constexpr auto contains() {
+            return static_type_eq<Key, Elem>();
+        }
+    };
 
-    // template<MYCLASS Key>
-    // static constexpr auto contains() {
-    //     return contains_c<Key>::template contains<Elems...>();
-    // }
+    template<MYCLASS Key>
+    static constexpr auto contains() {
+        return contains_c<Key>::template contains<Elems...>();
+    }
 
     // maps can only produce TLists, couldn't make it output a TTList
     template<template <MYCLASS> class F>
