@@ -120,8 +120,8 @@ struct AlignofReducer {
     template<class NT>
     constexpr auto feed() {
         if constexpr (alignof(NT) > alignof(T))
-            return SizeofReducer<NT>{};
+            return AlignofReducer<NT>{};
         else
-            return SizeofReducer<T>{};
+            return AlignofReducer<T>{};
     }
 };
