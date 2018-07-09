@@ -116,3 +116,16 @@ constexpr bool map_pack_contains() {
     else
         return map_pack_contains<TParm, Elem, HHList, Rest...>();
 }
+
+
+#define MYTEMPL
+#define TNAME TList
+#include "tlist.hxx"
+#undef TNAME
+#undef MYTEMPL
+
+#define MYTEMPL template<class>
+#define TNAME TTList
+#include "tlist.hxx"
+#undef TNAME
+#undef MYTEMPL
