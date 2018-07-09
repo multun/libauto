@@ -3,6 +3,9 @@
 #define MYCLASS MYTEMPL class
 
 template<MYCLASS ...Elems>
+struct TNAME;
+
+template<MYCLASS ...Elems>
 struct TNAME {
     using type = TNAME<Elems...>;
 
@@ -21,36 +24,29 @@ struct TNAME {
         return TNAME<T, Elems...>{};
     }
 
-    // unit helps working around syntaxical limitations
-    // where templated types need guiding. Good luck writting the stop
-    // case of the map function without a similar trick
-    template<MYCLASS T>
-    static constexpr auto unit() {
-        return TNAME<T>{};
-    }
-
     template<MYCLASS T>
     static constexpr auto push_back() {
         return TNAME<Elems..., T>{};
     }
 
+    // maps can only produce TLists, couldn't make it output a TTList
     template<template <MYCLASS> class F>
-    struct mapper {
+    struct Tmapper {
         template<MYCLASS First, MYCLASS Second, MYCLASS ...More>
         static constexpr auto map() {
-            auto tail = mapper<F>::template map<Second, More...>();
-            return tail.template push_front<F<First>::type>();
+            auto tail = Tmapper<F>::template map<Second, More...>();
+            return tail.template push_front<typename F<First>::type>();
         }
 
         template<MYCLASS Elem>
         static constexpr auto map() {
-            return unit<F<Elem>::type>();
+            return TList<typename F<Elem>::type>{};
         }
     };
 
     template<template <MYCLASS> class F>
-    static constexpr auto map() {
-        return mapper<F>::template map<Elems...>();
+    static constexpr auto Tmap() {
+        return Tmapper<F>::template map<Elems...>();
     }
 
     template<template<MYCLASS> class Reducer>

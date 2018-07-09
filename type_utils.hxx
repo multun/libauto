@@ -117,6 +117,11 @@ constexpr bool map_pack_contains() {
         return map_pack_contains<TParm, Elem, HHList, Rest...>();
 }
 
+template<class ...Elems>
+struct TList;
+
+template<template<class> class ...Elems>
+struct TTList;
 
 #define MYTEMPL
 #define TNAME TList
@@ -129,3 +134,33 @@ constexpr bool map_pack_contains() {
 #include "tlist.hxx"
 #undef TNAME
 #undef MYTEMPL
+
+template<class T>
+struct SizeofReducer {
+    constexpr auto operator()() {
+        return sizeof(T);
+    }
+
+    template<class NT>
+    constexpr auto feed() {
+        if constexpr (sizeof(NT) > sizeof(T))
+            return SizeofReducer<NT>{};
+        else
+            return SizeofReducer<T>{};
+    }
+};
+
+template<class T>
+struct AlignofReducer {
+    constexpr auto operator()() {
+        return alignof(T);
+    }
+
+    template<class NT>
+    constexpr auto feed() {
+        if constexpr (alignof(NT) > alignof(T))
+            return SizeofReducer<NT>{};
+        else
+            return SizeofReducer<T>{};
+    }
+};
