@@ -95,7 +95,7 @@ public:
     template<template<class> class NewState,
              template<class> class OldState,
              class ...Args>
-    void transit(OldState<self_t> *st, Args&& ...args) {
+    void transit(OldState<self_t> *, Args&& ...args) {
         free_transit<NewState, OldState, Args...>(std::forward<Args>(args)...);
     }
 };
