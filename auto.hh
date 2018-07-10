@@ -68,7 +68,6 @@ public:
         return *cur_data().template get_data<intf_t>();
     }
 
-
     ~Auto() {
         cur_data().leave();
     }
@@ -91,14 +90,29 @@ public:
 
     template<template<class> class NewState,
              template<class> class OldState,
+             class Auto>
+    static void default_logger(Auto) {
+        std::clog << "transition from " << typeid(OldState<Auto>).name() << " to "
+	          << typeid(NewState<Auto>).name() << std::endl;
+    }
+
+    template<template<class> class NewState,
+             template<class> class OldState,
              class ...Args>
     void free_transit(Args&& ...args) {
         static_assert(
             AllowedTransitions::template contains<TPair<OldState, NewState>>());
 
-#ifdef AUTO_LOGGING
-        std::cout << "transition from " << typeid(OldState<self_t>).name() << " to "
-                  << typeid(NewState<self_t>).name() << std::endl;
+
+        /* traits on variadic templates would be mandatory,
+           which is too annoying to be worth it */
+
+#ifdef DEFAULT_LOG_TRANSITIONS
+# define LOG_TRANSITIONS default_logger
+#endif
+
+#ifdef LOG_TRANSITIONS
+	LOG_TRANSITIONS<NewState, OldState>(this);
 #endif
 
         enter<NewState, Args...>(std::forward<Args>(args)...);
