@@ -44,11 +44,41 @@ struct StateB : ExInterface<Auto> {
 };
 
 
-using trans = TList<TPair<StateB, StateA>>;
-using MyAuto = Auto<ExInterface, trans, StateA, StateB>;
+template<class Auto>
+struct OverkillLogger {
+    size_t log_count = 0;
 
-int main() {
+    OverkillLogger(size_t msg_id)
+        : log_count{msg_id} {}
+
+    template<template<class> class NewState,
+             template<class> class OldState>
+    void log() {
+        std::clog << log_count++ << " transition from "
+                  << typeid(OldState<Auto>).name() << " to "
+	          << typeid(NewState<Auto>).name() << std::endl;
+    }
+};
+
+using Transitions = TList<TTPair<StateB, StateA>>;
+using States = TTList<StateA, StateB>;
+using MyAuto = Auto<ExInterface, Transitions, States>;
+using MyLoggingAuto = Auto<ExInterface, Transitions, States, OverkillLogger>;
+
+void logging_example() {
+    auto logger = OverkillLogger<MyLoggingAuto>{42};
+    auto a = MyLoggingAuto::template init<StateB>(std::move(logger), 1);
+    a.get_state().callback(a);
+    a.get_state().callback(a);
+}
+
+void silent_example() {
     auto a = MyAuto::template init<StateB>(1);
     a.get_state().callback(a);
     a.get_state().callback(a);
+}
+
+int main() {
+    logging_example();
+    silent_example();
 }

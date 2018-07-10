@@ -11,13 +11,22 @@
 
 #include "type_utils.hxx"
 
+template<class Auto>
+struct NoopAutoLogger {
+    template<template<class> class NewState,
+             template<class> class OldState>
+    void log() {
+    }
+};
+
 template<template<class> class PInterface,
          class AllowedTransitions,
-         template<class> class ...States>
+         class States,
+	 template<class> class Logger = NoopAutoLogger>
 class Auto {
-    using self_t = Auto<PInterface, AllowedTransitions, States...>;
+    using self_t = Auto<PInterface, AllowedTransitions, States, Logger>;
     using intf_t = PInterface<self_t>;
-    using ttlist = TTList<States...>;
+    using ttlist = States;
 
     template<template<class> class State>
     struct Automaker {
@@ -53,6 +62,8 @@ class Auto {
     StateData data_[2];
     bool data_pos_;
 
+    Logger<self_t> logger;
+
     StateData &cur_data() {
         return data_[data_pos_];
     }
@@ -62,6 +73,9 @@ class Auto {
     }
 
     Auto() : data_pos_(0) {}
+
+    Auto(Logger<self_t> &&log)
+      : data_pos_(0), logger(log) {}
 
 public:
     auto &get_state() {
@@ -80,20 +94,20 @@ public:
 	return res;
     }
 
+    template<template<class> class InitialState, class ...Args>
+    static Auto init(Logger<self_t> &&logger, Args&& ...args) {
+        auto res = Auto{std::move(logger)};
+        res.cur_data().template enter<InitialState, Args...>(
+            std::forward<Args>(args)...);
+	return res;
+    }
+
     template<template<class> class NewState, class ...Args>
     void enter(Args&& ...args) {
         other_data().template enter<NewState, Args...>(
             std::forward<Args>(args)...);
         cur_data().leave();
         data_pos_ = !data_pos_;
-    }
-
-    template<template<class> class NewState,
-             template<class> class OldState,
-             class Auto>
-    static void default_logger(Auto) {
-        std::clog << "transition from " << typeid(OldState<Auto>).name() << " to "
-	          << typeid(NewState<Auto>).name() << std::endl;
     }
 
     template<template<class> class NewState,
@@ -108,13 +122,7 @@ public:
         /* traits on variadic templates would be mandatory,
            which is too annoying to be worth it */
 
-#ifdef DEFAULT_LOG_TRANSITIONS
-# define LOG_TRANSITIONS default_logger
-#endif
-
-#ifdef LOG_TRANSITIONS
-	LOG_TRANSITIONS<NewState, OldState>(this);
-#endif
+        logger.template log<NewState, OldState>();
 
         enter<NewState, Args...>(std::forward<Args>(args)...);
     }
