@@ -41,7 +41,7 @@ class Auto {
             // TODO: move this assert at class construction time
             static_assert(std::is_base_of<intf_t, State<self_t>>::value);
             static_assert(tlist::template contains<State<self_t>>());
-            return new (&state_data_) State<self_t>(std::forward(args)...);
+            return new (&state_data_) State<self_t>(std::forward<Args...>(args)...);
         }
 
         void leave() {
@@ -75,13 +75,13 @@ public:
 
     template<template<class> class InitialState, class ...Args>
     void initialize(Args&& ...args) {
-        cur_data().template enter<InitialState, args...>(
+        cur_data().template enter<InitialState, Args...>(
             std::forward<Args>(args)...);
     }
 
     template<template<class> class NewState, class ...Args>
     void enter(Args&& ...args) {
-        other_data().template enter<NewState, args...>(
+        other_data().template enter<NewState, Args...>(
             std::forward<Args>(args)...);
         cur_data().leave();
         data_pos_ = !data_pos_;

@@ -21,8 +21,13 @@ struct ExInterface {
 
 template<class Auto>
 struct StateA : ExInterface<Auto> {
-    virtual void callback(Auto &a) override {
-        std::cout << "1" << std::endl;
+    const std::string message_;
+
+    StateA(std::string &&message) : message_{message} {
+    }
+
+    virtual void callback(Auto &) override {
+        std::cout << message_ << std::endl;
     }
 
     ~StateA() {
@@ -33,9 +38,13 @@ struct StateA : ExInterface<Auto> {
 
 template<class Auto>
 struct StateB : ExInterface<Auto> {
+    int i;
+    StateB(int i_):i{i_}{
+    }
+
     virtual void callback(Auto &a) override {
         std::cout << "B, entering 1" << std::endl;
-        a.template transit<StateA>(this);
+        a.template transit<StateA>(this, "test");
     }
 
     ~StateB() {
@@ -49,7 +58,7 @@ using MyAuto = Auto<ExInterface, trans, StateA, StateB>;
 
 int main() {
     MyAuto a;
-    a.template initialize<StateB>();
+    a.template initialize<StateB>(1);
     a.get_state().callback(a);
     a.get_state().callback(a);
 }
