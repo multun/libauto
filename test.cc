@@ -1,15 +1,6 @@
 #include "auto.hh"
 #include <iostream>
 
-// template<class ...States>
-// struct ExInterface;
-// template<class ...States>
-// struct StateA;
-// template<class ...States>
-// struct StateB;
-
-
-
 template<class Auto>
 struct ExInterface {
     virtual void callback(Auto &a) = 0;
@@ -57,8 +48,7 @@ using trans = TList<TPair<StateB, StateA>>;
 using MyAuto = Auto<ExInterface, trans, StateA, StateB>;
 
 int main() {
-    MyAuto a;
-    a.template initialize<StateB>(1);
+    auto a = MyAuto::template init<StateB>(1);
     a.get_state().callback(a);
     a.get_state().callback(a);
 }

@@ -61,22 +61,24 @@ class Auto {
         return data_[!data_pos_];
     }
 
+    Auto() : data_pos_(0) {}
 
 public:
     auto &get_state() {
         return *cur_data().template get_data<intf_t>();
     }
 
-    Auto() : data_pos_(0) {}
 
     ~Auto() {
         cur_data().leave();
     }
 
     template<template<class> class InitialState, class ...Args>
-    void initialize(Args&& ...args) {
-        cur_data().template enter<InitialState, Args...>(
+    static Auto init(Args&& ...args) {
+        Auto res;
+        res.cur_data().template enter<InitialState, Args...>(
             std::forward<Args>(args)...);
+	return res;
     }
 
     template<template<class> class NewState, class ...Args>
