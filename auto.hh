@@ -101,7 +101,8 @@ public:
              class ...Args>
     void free_transit(Args&& ...args) {
         static_assert(
-            AllowedTransitions::template contains<TPair<OldState, NewState>>());
+            AllowedTransitions::template contains<TTPair<OldState, NewState>>(),
+            "forbidden transition");
 
 
         /* traits on variadic templates would be mandatory,
