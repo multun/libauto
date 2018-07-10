@@ -1,6 +1,7 @@
 #include "auto.hh"
 #include <iostream>
 
+// interface all the states of the automaton have to inherit from
 template<class Auto>
 struct ExInterface {
     virtual void callback(Auto &a) = 0;
@@ -9,41 +10,45 @@ struct ExInterface {
     }
 };
 
-
 template<class Auto>
 struct StateA : ExInterface<Auto> {
+    // no need to be trivially constructible
     const std::string message_;
 
-    StateA(std::string &&message) : message_{message} {
+    StateA(std::string &&message)
+        : message_{message} {
+        std::cout << "[StateA] initializing with message=" << message << std::endl;
     }
 
     virtual void callback(Auto &) override {
-        std::cout << message_ << std::endl;
+        std::cout << "[StateA][callback] " << message_ << std::endl;
     }
 
     ~StateA() {
-        std::cout << "destroying state a" << std::endl;
+        std::cout << "[StateA] destroying" << std::endl;
     }
 };
 
-
 template<class Auto>
 struct StateB : ExInterface<Auto> {
-    int i;
-    StateB(int i_):i{i_}{
+    int i_;
+
+    StateB(int i)
+        : i_{i} {
+        std::cout << "[StateB] initializing with i=" << i << std::endl;
     }
 
     virtual void callback(Auto &a) override {
-        std::cout << "B, entering 1" << std::endl;
+        std::cout << "[StateB][callback] transition to StateA" << std::endl;
         a.template transit<StateA>(this, "test");
     }
 
     ~StateB() {
-        std::cout << "destroying state b" << std::endl;
+        std::cout << "[StateB] destroying" << std::endl;
     }
 };
 
-
+// loggers my be stateful
 template<class Auto>
 struct OverkillLogger {
     size_t log_count = 0;
@@ -61,11 +66,12 @@ struct OverkillLogger {
 };
 
 using Transitions = TList<TTPair<StateB, StateA>>;
+// packing states into a further abstraction enables reusing
+// the list / having optional template parameters
 using States = TTList<StateA, StateB>;
-using MyAuto = Auto<ExInterface, Transitions, States>;
-using MyLoggingAuto = Auto<ExInterface, Transitions, States, OverkillLogger>;
 
 void logging_example() {
+    using MyLoggingAuto = Auto<ExInterface, Transitions, States, OverkillLogger>;
     auto logger = OverkillLogger<MyLoggingAuto>{42};
     auto a = MyLoggingAuto::template init<StateB>(std::move(logger), 1);
     a.get_state().callback(a);
@@ -73,6 +79,7 @@ void logging_example() {
 }
 
 void silent_example() {
+    using MyAuto = Auto<ExInterface, Transitions, States>;
     auto a = MyAuto::template init<StateB>(1);
     a.get_state().callback(a);
     a.get_state().callback(a);
