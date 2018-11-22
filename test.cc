@@ -11,7 +11,7 @@ struct ExInterface {
 };
 
 template<class Auto>
-struct StateA : ExInterface<Auto> {
+struct StateA : Auto::intf_t {
     // no need to be trivially constructible
     const std::string message_;
 
@@ -20,7 +20,7 @@ struct StateA : ExInterface<Auto> {
         std::cout << "[StateA] initializing with message=" << message << std::endl;
     }
 
-    virtual void callback(Auto &) override {
+    virtual void callback(typename Auto::auto_t &) override {
         std::cout << "[StateA][callback] " << message_ << std::endl;
     }
 
@@ -30,7 +30,7 @@ struct StateA : ExInterface<Auto> {
 };
 
 template<class Auto>
-struct StateB : ExInterface<Auto> {
+struct StateB : Auto::intf_t {
     int i_;
 
     StateB(int i)
@@ -38,9 +38,9 @@ struct StateB : ExInterface<Auto> {
         std::cout << "[StateB] initializing with i=" << i << std::endl;
     }
 
-    virtual void callback(Auto &a) override {
+    virtual void callback(typename Auto::auto_t &a) override {
         std::cout << "[StateB][callback] transition to StateA" << std::endl;
-        a.template transit<StateA>(this, "test");
+        Auto::template transit<StateA>(a, "test");
     }
 
     ~StateB() {
@@ -60,8 +60,8 @@ struct OverkillLogger {
              template<class> class OldState>
     void log() {
         std::clog << log_count++ << " transition from "
-                  << typeid(OldState<Auto>).name() << " to "
-	          << typeid(NewState<Auto>).name() << std::endl;
+                  << Auto::template state_name<OldState>() << " to "
+	          << Auto::template state_name<NewState>() << std::endl;
     }
 };
 
@@ -73,7 +73,7 @@ using States = TTList<StateA, StateB>;
 void logging_example() {
     using MyLoggingAuto = Auto<ExInterface, Transitions, States, OverkillLogger>;
     auto logger = OverkillLogger<MyLoggingAuto>{42};
-    auto a = MyLoggingAuto::template init<StateB>(std::move(logger), 1);
+    auto a = MyLoggingAuto::template init_logger<StateB>(std::move(logger), 1);
     a.get_state().callback(a);
     a.get_state().callback(a);
 }
@@ -89,3 +89,4 @@ int main() {
     logging_example();
     silent_example();
 }
+

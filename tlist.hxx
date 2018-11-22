@@ -57,12 +57,12 @@ struct TNAME {
         template<MYCLASS First, MYCLASS Second, MYCLASS ...More>
         static constexpr auto map() {
             auto tail = Tmapper<F>::template map<Second, More...>();
-            return tail.template push_front<typename F<First>::type>();
+            return tail.template push_front<typename F<First>::map_t>();
         }
 
         template<MYCLASS Elem>
         static constexpr auto map() {
-            return TList<typename F<Elem>::type>{};
+            return TList<typename F<Elem>::map_t>{};
         }
     };
 
